@@ -34,7 +34,7 @@ func ExampleNew() {
 
 // Find favicons using custom options. Passing IgnoreManifest and IgnoreWellKnown
 // causes the Finder to only retrieve the initial URL (HTML page).
-func ExampleNew_with_options() {
+func ExampleNew_withOptions() {
 	f := favicon.New(
 		// Don't look for or parse a manifest.json file
 		favicon.IgnoreManifest,
