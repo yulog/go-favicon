@@ -21,6 +21,12 @@ import (
 )
 
 var (
+	// set by Makefile
+	version   = "undefined"
+	buildDate = "undefined"
+)
+
+var (
 	fs          = flag.NewFlagSet("favicon", flag.ExitOnError)
 	flagHelp    = fs.Bool("h", false, "show this message and exit")
 	flagJSON    = fs.Bool("json", false, "output favicon list as JSON")
@@ -28,6 +34,7 @@ var (
 	flagTSV     = fs.Bool("tsv", false, "output favicon list as TSV")
 	flagSquare  = fs.Bool("square", false, "only show square icons")
 	flagVerbose = fs.Bool("v", false, "show informational messages")
+	flagVersion = fs.Bool("version", false, "show version number and exit")
 
 	log  *stdlog.Logger
 	opts []favicon.Option
@@ -51,7 +58,13 @@ func init() {
 func main() {
 	checkErr(fs.Parse(os.Args[1:]))
 
-	if *flagHelp {
+	if *flagVersion {
+		fmt.Printf("favicon %s\n", version)
+		fmt.Printf("built: %s\n", buildDate)
+		return
+	}
+
+	if *flagHelp || fs.NArg() == 0 {
 		usage()
 		return
 	}
