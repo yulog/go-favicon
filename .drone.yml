@@ -1,0 +1,43 @@
+kind: pipeline
+name: continuous-integration
+
+steps:
+  - name: deps
+    image: golang
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      - go mod download
+
+  - name: lint
+    image: golang
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      - go get -v golang.org/x/lint/golint
+      - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.27.0
+      - make lint
+
+  - name: test
+    image: golang
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      # - go get -v gotest.tools/gotestsum
+      - go get -v github.com/mfridman/tparse
+      - make test
+
+  - name: build
+    image: golang
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      - make build
+
+volumes:
+  - name: deps
+    temp: {}

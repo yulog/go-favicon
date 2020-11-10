@@ -14,8 +14,9 @@ import (
 //
 // TODO: Use *Icon everywhere to be consistent with higher-level APIs that return nil for "not found".
 type Icon struct {
-	URL    string `json:"url"`    // Never empty
-	Format string `json:"format"` // MIME type of icon; never empty
+	URL      string `json:"url"`       // Never empty
+	MimeType string `json:"mimetype"`  // MIME type of icon; never empty
+	FileExt  string `json:"extension"` // File extension; may be empty
 	// Dimensions are extracted from markup/manifest, falling back to
 	// searching for numbers in the URL.
 	Width  int `json:"width"`
@@ -26,6 +27,18 @@ type Icon struct {
 
 // IsSquare returns true if image has equally-long sides.
 func (i Icon) IsSquare() bool { return i.Width == i.Height }
+
+// Copy returns a new Icon with the same values as this one.
+func (i Icon) Copy() Icon {
+	return Icon{
+		URL:      i.URL,
+		MimeType: i.MimeType,
+		FileExt:  i.FileExt,
+		Width:    i.Width,
+		Height:   i.Height,
+		Hash:     i.Hash,
+	}
+}
 
 // Icons is a collection of icons for a URL.
 // It implements sort.Interface and sorts icons by width (largest first).
@@ -38,9 +51,10 @@ func (v Icons) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
 // used for sorting icons
 // higher number = higher priority
 var formatRank = map[string]int{
-	"image/png":    10,
-	"image/svg":    9,
-	"image/x-icon": 8,
+	"image/png":                10,
+	"image/svg":                9,
+	"image/x-icon":             8, // .ico
+	"image/vnd.microsoft.icon": 8, // .ico
 }
 
 func (v Icons) Less(i, j int) bool {
@@ -48,7 +62,7 @@ func (v Icons) Less(i, j int) bool {
 	if a.Width != b.Width {
 		return a.Width > b.Width
 	}
-	fa, fb := formatRank[a.Format], formatRank[b.Format]
+	fa, fb := formatRank[a.MimeType], formatRank[b.MimeType]
 	if fa != fb {
 		return fa > fb
 	}
@@ -61,12 +75,16 @@ func (p *parser) postProcessIcons(icons Icons) Icons {
 	for _, icon := range icons {
 		icon.URL = p.absURL(icon.URL)
 
-		if icon.Format == "" {
-			icon.Format = mimeTypeURL(icon.URL)
+		if icon.MimeType == "" {
+			icon.MimeType = mimeTypeURL(icon.URL)
 		}
 
-		if icon.URL == "" || icon.Format == "" {
+		if icon.URL == "" || icon.MimeType == "" {
 			continue
+		}
+
+		if icon.FileExt == "" {
+			icon.FileExt = fileExt(icon.URL)
 		}
 
 		if icon.Width == 0 {

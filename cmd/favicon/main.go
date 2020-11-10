@@ -104,7 +104,7 @@ func main() {
 	if *flagTSV {
 		fmt.Println("#\tformat\twidth\theight\tURL")
 		for i, icon := range icons {
-			fmt.Printf("%d\t%s\t%d\t%d\t%s\n", i+1, icon.Format, icon.Width, icon.Height, icon.URL)
+			fmt.Printf("%d\t%s\t%d\t%d\t%s\n", i+1, icon.MimeType, icon.Width, icon.Height, icon.URL)
 		}
 		return
 	}
@@ -116,7 +116,7 @@ func main() {
 
 	for i, icon := range icons {
 		t.AppendRow(table.Row{
-			i + 1, icon.Format, icon.Width, icon.Height, icon.URL,
+			i + 1, icon.MimeType, icon.Width, icon.Height, icon.URL,
 		})
 	}
 	if *flagCSV {

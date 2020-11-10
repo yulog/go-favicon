@@ -7,6 +7,7 @@ package favicon
 import (
 	"io"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	gq "github.com/PuerkitoBio/goquery"
@@ -128,12 +129,14 @@ func (p *parser) parseLink(sel *gq.Selection) []Icon {
 	}
 
 	icon.URL = href
+	// icon.FileExt = fileExt(href)
 	if typ != "" {
-		icon.Format = typ
+		icon.MimeType = typ
 	}
 	if size != "" {
 		for _, sz := range parseSizes(size) {
-			i := Icon{URL: icon.URL, Format: icon.Format, Width: sz.w, Height: sz.h}
+			i := icon.Copy()
+			i.Width, i.Height = sz.w, sz.h
 			icons = append(icons, i)
 		}
 	}
@@ -143,4 +146,13 @@ func (p *parser) parseLink(sel *gq.Selection) []Icon {
 
 	p.f.log.Printf("(link) %s", icon.URL)
 	return icons
+}
+
+// extract file extension from a URL.
+func fileExt(u string) string {
+	p, err := url.Parse(u)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimPrefix(filepath.Ext(p.Path), ".")
 }

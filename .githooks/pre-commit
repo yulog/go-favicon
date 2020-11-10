@@ -1,13 +1,4 @@
-#!/bin/zsh
-
-set -e
+#!/bin/zsh -e
 
 make checks
-print -P "%F{green}linted OK%f"
-
-# go mod tidy -v
-# gofmt -s -w ./...
-
-# golint -set_exit_status ./...
-# golangci-lint run -c .golangci.toml
-# print -P "%F{green}linted OK%f"
+print -P "%F{green}checks OK%f"

@@ -1,32 +1,54 @@
-SHELL=/bin/zsh
+SHELL := /bin/bash
 
 VERSION ?= $(shell git describe --tags --always --abbrev=10)
-NOW ?= $(shell date)
+BUILD_DATE ?= $(shell date)
+LDFLAGS ?= -X "main.version=$(VERSION)" -X "main.buildDate=$(BUILD_DATE)"
 
+GOFILES := $(shell find . -type f -name '*.go' )
+GOFMT ?= gofmt -s -w
+
+.PHONY: tidy
 tidy:
 	go mod tidy -v
 
+.PHONY: format
 format:
-	gofmt -s -w **/*.go
+	$(GOFMT) $(GOFILES)
 
+.PHONY: golint
 golint:
 	golint -set_exit_status ./...
 
+.PHONY: golangci
 golangci:
 	golangci-lint run -c .golangci.toml
 
+.PHONY: lint
 lint: golint golangci
 
-
+.PHONY: test
 test:
-# 	go test -v ./...
-	gotestsum -f pkgname-and-test-fails -- ./...
+	go test -json -cover -coverprofile cover.out | tparse
 
+.PHONY: test-coverage
+test-coverage:
+	go tool cover -html=cover.out -o cover.html
+
+.PHONY: build
 build:
-	go build -ldflags "-X \"main.version=$(VERSION)\" -X \"main.buildDate=$(NOW)\"" -v ./cmd/favicon
+	go build -ldflags '$(LDFLAGS)' -v ./cmd/favicon
 
+.PHONY: clean
+clean:
+	go clean
+	rm -rf ./favicon
+
+.PHONY: run
 run:
 	go run ./cmd/favicon/main.go
 
+.PHONY: all
 all: tidy format lint test build
+
+.PHONY: checks
 checks: tidy format lint

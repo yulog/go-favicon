@@ -19,11 +19,11 @@ func (p *parser) parseOpenGraph(kv []string) []Icon {
 			if icon != nil {
 				icons = append(icons, *icon)
 			}
-			icon = &Icon{URL: p.absURL(v)}
+			icon = &Icon{URL: v}
 			p.f.log.Printf("(opengraph) %s", icon.URL)
 		case "og:image:type":
 			if icon != nil {
-				icon.Format = v
+				icon.MimeType = v
 			}
 		case "og:image:width":
 			if icon != nil {

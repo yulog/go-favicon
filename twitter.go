@@ -18,7 +18,7 @@ func (p *parser) parseTwitter(kv []string) []Icon {
 			if icon != nil {
 				icons = append(icons, *icon)
 			}
-			icon = &Icon{URL: p.absURL(v)}
+			icon = &Icon{URL: v}
 			p.f.log.Printf("(twitter) %s", icon.URL)
 		case "twitter:image:width":
 			if icon != nil {

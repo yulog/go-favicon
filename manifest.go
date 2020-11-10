@@ -21,6 +21,7 @@ type Manifest struct {
 // ManifestIcon is an icon from a manifest.json file.
 type ManifestIcon struct {
 	URL      string `json:"src"`
+	Type     string `json:"type"`
 	RawSizes string `json:"sizes"`
 }
 
@@ -51,8 +52,8 @@ func (p *parser) parseManifestReader(r io.Reader) []Icon {
 	if err = dec.Decode(&man); err != nil {
 		p.f.log.Printf("[ERROR] parse manifest: %v", err)
 	}
-
 	for _, mi := range man.Icons {
+		// TODO: make URL relative to manifest, not page
 		mi.URL = p.absURL(mi.URL)
 		p.f.log.Printf("(manifest) %s", mi.URL)
 		for _, sz := range parseSizes(mi.RawSizes) {

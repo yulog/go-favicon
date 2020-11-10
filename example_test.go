@@ -19,16 +19,16 @@ func ExampleNew() {
 	}
 	// icons are sorted widest first
 	for _, i := range icons {
-		fmt.Printf("%dx%d\t%s\n", i.Width, i.Height, i.Format)
+		fmt.Printf("%dx%d\t%s\n", i.Width, i.Height, i.FileExt)
 	}
 	// Output:
-	// 256x256	image/png
-	// 192x192	image/png
-	// 180x180	image/png
-	// 32x32	image/png
-	// 16x16	image/png
-	// 0x0	image/png
-	// 0x0	image/x-icon
+	// 256x256	png
+	// 192x192	png
+	// 180x180	png
+	// 32x32	png
+	// 16x16	png
+	// 0x0	png
+	// 0x0	ico
 }
 
 // Find favicons using custom options. Passing IgnoreManifest and IgnoreWellKnown
@@ -47,7 +47,7 @@ func ExampleNew_withOptions() {
 	}
 	// icons are sorted widest first
 	for _, i := range icons {
-		fmt.Printf("%dx%d\t%s\n", i.Width, i.Height, i.Format)
+		fmt.Printf("%dx%d\t%s\n", i.Width, i.Height, i.MimeType)
 	}
 	// Output:
 	// 180x180	image/png
