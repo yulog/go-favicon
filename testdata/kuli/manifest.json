@@ -1,0 +1,20 @@
+{
+    "name": "Kulturliste D\u00fcsseldorf",
+    "short_name": "KuLi",
+    "display": "minimal-ui",
+    "icons": [
+        {
+            "src": "/img/icons/kuli-yellow-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/img/icons/kuli-yellow-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "/",
+    "theme_color": "#fcc004",
+    "background_color": "#fcc004"
+}
