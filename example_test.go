@@ -12,9 +12,8 @@ import (
 
 // Find favicons using default options.
 func ExampleNew() {
-	f := favicon.New()
 	// Find icons defined in HTML, the manifest file and at default locations
-	icons, err := f.Find("https://www.deanishe.net")
+	icons, err := favicon.Find("https://www.deanishe.net")
 	if err != nil {
 		panic(err)
 	}

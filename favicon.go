@@ -5,6 +5,9 @@
 // Package favicon finds icons for websites. It can find icons in HTML (favicons
 // in <link> elements, Open Graph or Twitter images) and in JSON manifests, or
 // check common paths on the server (e.g. /favicon.ico).
+//
+// Package-level functions call the corresponding methods on a default Finder.
+// For customised Finder behaviour, pass appropriate options to New().
 package favicon
 
 import (

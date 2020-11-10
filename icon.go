@@ -11,6 +11,8 @@ import (
 )
 
 // Icon is a favicon parsed from an HTML file or JSON manifest.
+//
+// TODO: Use *Icon everywhere to be consistent with higher-level APIs that return nil for "not found".
 type Icon struct {
 	URL    string `json:"url"`    // Never empty
 	Format string `json:"format"` // MIME type of icon; never empty
