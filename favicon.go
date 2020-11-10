@@ -2,6 +2,9 @@
 // MIT Licence applies http://opensource.org/licenses/MIT
 // Created on 2020-11-09
 
+// Package favicon finds icons for websites. It can find icons in HTML (favicons
+// in <link> elements, Open Graph or Twitter images) and in JSON manifests, or
+// check common paths on the server (e.g. /favicon.ico).
 package favicon
 
 import (
@@ -61,6 +64,21 @@ func IgnoreWellKnown(f *Finder) { f.ignoreWellKnown = true }
 func IgnoreManifest(f *Finder) { f.ignoreManifest = true }
 
 // Finder discovers favicons for a URL.
+// By default, a Finder looks in the following places:
+//
+//     - The HTML page at the given URL for...
+//         - icons in <link> tags
+//         - Open Graph images
+//         - Twitter images
+//     - The manifest file defined in the HTML page
+//       -- or --
+//     - /manifest.json
+//     - Standard favicon paths
+//         - /favicon.ico
+//         - /apple-touch-icon.png
+//
+// Pass the IgnoreManifest and/or IgnoreWellKnown Options to New() to
+// reduce the number of requests made to webservers.
 type Finder struct {
 	ignoreManifest  bool
 	ignoreWellKnown bool

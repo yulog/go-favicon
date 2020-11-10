@@ -2,6 +2,10 @@
 // MIT Licence applies http://opensource.org/licenses/MIT
 // Created on 2020-11-09
 
+// Command favicon finds favicons for a URL and prints their format, size and URL.
+// It can search HTML tags, manifest files and common locations on the server.
+// Results are printed in a pretty table by default, but can be dumped as
+// JSON, CSV or TSV.
 package main
 
 import (
