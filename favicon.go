@@ -70,9 +70,10 @@ func IgnoreManifest(f *Finder) { f.ignoreManifest = true }
 //         - icons in <link> tags
 //         - Open Graph images
 //         - Twitter images
-//     - The manifest file defined in the HTML page
-//       -- or --
-//     - /manifest.json
+//     - The manifest file...
+//         - defined in the HTML page
+//           -- or --
+//         - /manifest.json
 //     - Standard favicon paths
 //         - /favicon.ico
 //         - /apple-touch-icon.png
