@@ -28,12 +28,32 @@ type Icon struct {
 func (i Icon) IsSquare() bool { return i.Width == i.Height }
 
 // Icons is a collection of icons for a URL.
+// It implements sort.Interface and sorts icons by width (largest first).
 type Icons []Icon
 
 // Implement sort.Interface
-func (v Icons) Len() int           { return len(v) }
-func (v Icons) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
-func (v Icons) Less(i, j int) bool { return v[i].Width < v[j].Width }
+func (v Icons) Len() int      { return len(v) }
+func (v Icons) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+
+// used for sorting icons
+// higher number = higher priority
+var formatRank = map[string]int{
+	"image/png":    10,
+	"image/svg":    9,
+	"image/x-icon": 8,
+}
+
+func (v Icons) Less(i, j int) bool {
+	a, b := v[i], v[j]
+	if a.Width != b.Width {
+		return a.Width > b.Width
+	}
+	fa, fb := formatRank[a.Format], formatRank[b.Format]
+	if fa != fb {
+		return fa > fb
+	}
+	return a.URL < b.URL
+}
 
 // Check missing values, remove duplicates, sort.
 func (p *parser) postProcessIcons(icons Icons) Icons {
@@ -66,7 +86,7 @@ func (p *parser) postProcessIcons(icons Icons) Icons {
 		i++
 	}
 
-	sort.Sort(sort.Reverse(icons))
+	sort.Sort(icons)
 	return icons
 }
 

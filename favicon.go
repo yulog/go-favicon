@@ -18,7 +18,6 @@ import (
 	"net/url"
 	"path/filepath"
 
-	gq "github.com/PuerkitoBio/goquery"
 	"github.com/friendsofgo/errors"
 )
 
@@ -151,7 +150,6 @@ func (f *Finder) fetchURL(url string) (io.ReadCloser, error) {
 }
 
 type parser struct {
-	doc     *gq.Document
 	baseURL *url.URL
 	charset string
 

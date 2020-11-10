@@ -29,8 +29,7 @@ func (p *parser) parseURL(u string) (Icons, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "parse HTML")
 	}
-	p.doc = doc
-	return p.parse()
+	return p.parse(doc)
 }
 
 func (p *parser) parseReader(r io.Reader) (Icons, error) {
@@ -38,16 +37,16 @@ func (p *parser) parseReader(r io.Reader) (Icons, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "parse HTML")
 	}
-	p.doc = doc
-	return p.parse()
+	return p.parse(doc)
 }
 
-func (p *parser) parse() (Icons, error) {
+// main parser function
+func (p *parser) parse(doc *gq.Document) (Icons, error) {
 	var (
 		icons       Icons
 		manifestURL = p.absURL("/manifest.json")
 	)
-	p.doc.Find("link").Each(func(i int, sel *gq.Selection) {
+	doc.Find("link").Each(func(i int, sel *gq.Selection) {
 		rel, _ := sel.Attr("rel")
 		rel = strings.ToLower(rel)
 		switch rel {
@@ -72,7 +71,7 @@ func (p *parser) parse() (Icons, error) {
 		opengraph []string
 		twitter   []string
 	)
-	p.doc.Find("meta").Each(func(i int, sel *gq.Selection) {
+	doc.Find("meta").Each(func(i int, sel *gq.Selection) {
 		if s, ok := sel.Attr("charset"); ok && s != "" {
 			p.charset = s
 			return

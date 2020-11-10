@@ -27,8 +27,8 @@ func ExampleNew() {
 	// 180x180	image/png
 	// 32x32	image/png
 	// 16x16	image/png
-	// 0x0	image/x-icon
 	// 0x0	image/png
+	// 0x0	image/x-icon
 }
 
 // Find favicons using custom options. Passing IgnoreManifest and IgnoreWellKnown
