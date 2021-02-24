@@ -9,6 +9,7 @@ steps:
         path: /go
     commands:
       - cat /etc/resolv.conf
+    when: [ success, failure ]
 
   - name: deps
     image: golang
