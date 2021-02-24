@@ -29,7 +29,7 @@ type size struct {
 	w, h int
 }
 
-func (p *parser) parseManifest(url string) []Icon {
+func (p *parser) parseManifest(url string) []*Icon {
 	p.find.log.Printf("loading manifest %q ...", url)
 	rc, err := p.find.fetchURL(url)
 	if err != nil {
@@ -41,9 +41,9 @@ func (p *parser) parseManifest(url string) []Icon {
 	return p.parseManifestReader(rc)
 }
 
-func (p *parser) parseManifestReader(r io.Reader) []Icon {
+func (p *parser) parseManifestReader(r io.Reader) []*Icon {
 	var (
-		icons []Icon
+		icons []*Icon
 		man   = Manifest{}
 		err   error
 	)
@@ -57,7 +57,7 @@ func (p *parser) parseManifestReader(r io.Reader) []Icon {
 		mi.URL = p.absURL(mi.URL)
 		p.find.log.Printf("(manifest) %s", mi.URL)
 		for _, sz := range parseSizes(mi.RawSizes) {
-			icon := Icon{
+			icon := &Icon{
 				URL:    mi.URL,
 				Width:  sz.w,
 				Height: sz.h,

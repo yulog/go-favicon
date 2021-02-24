@@ -31,6 +31,35 @@ func (l debugLogger) Printf(format string, v ...interface{}) {
 	}
 }
 
+// TestBaseURL verifies absolute links.
+func TestBaseURL(t *testing.T) {
+	t.Parallel()
+	file, err := os.Open("testdata/kuli/index.html")
+	require.Nil(t, err, "unexpected error")
+	defer file.Close()
+
+	f := New(
+		WithLogger(debugLogger{}),
+		OnlyICO,
+		IgnoreWellKnown,
+		IgnoreManifest,
+	)
+	require.Nil(t, err, "unexpected error")
+
+	var (
+		baseURL = "https://www.kulturliste-duesseldorf.de"
+		x       = "https://www.kulturliste-duesseldorf.de/favicon-rot.ico"
+		icons   []*Icon
+	)
+	icons, err = f.FindReader(file, baseURL)
+	require.Nil(t, err, "unexpected error")
+	// for _, i := range icons {
+	// 	fmt.Println(i)
+	// }
+	require.Equal(t, 1, len(icons), "unexpected favicon count")
+	assert.Equal(t, x, icons[0].URL, "unexpected favicon URL")
+}
+
 // TestFindHTML parses HTML only.
 func TestFindHTML(t *testing.T) {
 	t.Parallel()
@@ -41,7 +70,7 @@ func TestFindHTML(t *testing.T) {
 	f := New(WithLogger(debugLogger{}))
 	require.Nil(t, err, "unexpected error")
 
-	var icons ByWidth
+	var icons []*Icon
 	icons, err = f.FindReader(file)
 	require.Nil(t, err, "unexpected error")
 	assert.Equal(t, 6, len(icons), "unexpected favicon count")
@@ -141,6 +170,50 @@ func TestIgnore(t *testing.T) {
 			f := New(opts...)
 			icons, err := f.Find(ts.URL + "/index.html")
 			require.Nil(t, err, "unexpected error")
+			assert.Equal(t, td.xcount, len(icons), "unexpected favicon count")
+		})
+	}
+}
+
+// TestFilter verifies filtering Options.
+func TestFilter(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name, path string
+		opts       []Option
+		xcount     int
+	}{
+		{"no-options", "./testdata/multiformat", []Option{}, 9},
+		{"only-square", "./testdata/multiformat", []Option{OnlySquare}, 6},
+		{"ignore-nosize", "./testdata/multiformat", []Option{IgnoreNoSize}, 8},
+		{"only-ico", "./testdata/multiformat", []Option{OnlyICO}, 1},
+		{"only-png", "./testdata/multiformat", []Option{OnlyPNG}, 7},
+		{"only-square-png", "./testdata/multiformat", []Option{OnlyPNG, OnlySquare}, 4},
+		{"only-jpeg", "./testdata/multiformat", []Option{OnlyMimeType("image/jpeg")}, 1},
+		{"only-square-sized", "./testdata/multiformat", []Option{OnlySquare, IgnoreNoSize}, 5},
+		{"only-400", "./testdata/multiformat", []Option{MinWidth(400), MaxWidth(400)}, 1},
+		{"width-100-and-200", "./testdata/multiformat", []Option{MinWidth(100), MaxWidth(200)}, 4},
+		{"width+height-100-and-200", "./testdata/multiformat", []Option{MinWidth(100), MaxWidth(200), MinHeight(100), MaxHeight(200)}, 2},
+	}
+
+	for _, td := range tests {
+		td := td
+		t.Run(td.name, func(t *testing.T) {
+			t.Parallel()
+			ts := httptest.NewServer(http.FileServer(http.Dir(td.path)))
+			defer ts.Close()
+
+			opts := []Option{
+				WithClient(ts.Client()),
+				WithLogger(debugLogger{}),
+			}
+			opts = append(opts, td.opts...)
+			f := New(opts...)
+			icons, err := f.Find(ts.URL + "/index.html")
+			require.Nil(t, err, "unexpected error")
+			for _, i := range icons {
+				fmt.Println(i)
+			}
 			assert.Equal(t, td.xcount, len(icons), "unexpected favicon count")
 		})
 	}

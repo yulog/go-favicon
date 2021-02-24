@@ -14,7 +14,8 @@ import (
 	"github.com/friendsofgo/errors"
 )
 
-func (p *parser) parseURL(url string) (ByWidth, error) {
+// entry point for URLs
+func (p *parser) parseURL(url string) ([]*Icon, error) {
 	u, err := urls.Parse(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid URL")
@@ -25,6 +26,7 @@ func (p *parser) parseURL(url string) (ByWidth, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "fetch page")
 	}
+	defer rc.Close()
 
 	doc, err := gq.NewDocumentFromReader(rc)
 	if err != nil {
@@ -33,7 +35,8 @@ func (p *parser) parseURL(url string) (ByWidth, error) {
 	return p.parse(doc)
 }
 
-func (p *parser) parseReader(r io.Reader) (ByWidth, error) {
+// entry point for io.Reader
+func (p *parser) parseReader(r io.Reader) ([]*Icon, error) {
 	doc, err := gq.NewDocumentFromReader(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse HTML")
@@ -42,15 +45,18 @@ func (p *parser) parseReader(r io.Reader) (ByWidth, error) {
 }
 
 // main parser function
-func (p *parser) parse(doc *gq.Document) (ByWidth, error) {
+func (p *parser) parse(doc *gq.Document) ([]*Icon, error) {
 	var (
-		icons       ByWidth
+		icons       []*Icon
 		manifestURL = p.absURL("/manifest.json")
 	)
+
+	// icons described in <link../> tags
 	doc.Find("link").Each(func(i int, sel *gq.Selection) {
 		rel, _ := sel.Attr("rel")
 		rel = strings.ToLower(rel)
 		switch rel {
+		// all cases are handled the same way for now
 		case "icon", "alternate icon", "shortcut icon":
 			icons = append(icons, p.parseLink(sel)...)
 		case "apple-touch-icon", "apple-touch-icon-precomposed":
@@ -67,7 +73,9 @@ func (p *parser) parse(doc *gq.Document) (ByWidth, error) {
 		}
 	})
 
+	// OpenGraph (og:) and Twitter <meta../> tags
 	var (
+		// k, v, k, v sequences
 		opengraph []string
 		twitter   []string
 	)
@@ -100,11 +108,15 @@ func (p *parser) parse(doc *gq.Document) (ByWidth, error) {
 		}
 	})
 
+	// find icons in k, v sequences
 	icons = append(icons, p.parseOpenGraph(opengraph)...)
 	icons = append(icons, p.parseTwitter(twitter)...)
+
+	// retrieve and parse JSON manifest
 	if !p.find.ignoreManifest {
 		icons = append(icons, p.parseManifest(manifestURL)...)
 	}
+	// check for existence of URLs like /favicon.ico
 	if !p.find.ignoreWellKnown {
 		icons = append(icons, p.findWellKnownIcons()...)
 	}
@@ -114,13 +126,14 @@ func (p *parser) parse(doc *gq.Document) (ByWidth, error) {
 	return icons, nil
 }
 
-func (p *parser) parseLink(sel *gq.Selection) []Icon {
+// extract icons defined in <link../> tags
+func (p *parser) parseLink(sel *gq.Selection) []*Icon {
 	var (
 		href, _ = sel.Attr("href")
 		typ, _  = sel.Attr("type")
 		size, _ = sel.Attr("sizes")
-		icons   []Icon
-		icon    Icon
+		icons   []*Icon
+		icon    = &Icon{}
 	)
 
 	if href = p.absURL(href); href == "" {

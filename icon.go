@@ -25,12 +25,18 @@ type Icon struct {
 	Hash string `json:"hash"`
 }
 
+// String implements Stringer.
+func (i Icon) String() string {
+	return fmt.Sprintf("Icon{\n\tURL: %q,\n\tMimeType: %q,\n\tWidth: %d,\n\tHeight: %d,\n\tHash: %q\n}",
+		i.URL, i.MimeType, i.Width, i.Height, i.Hash)
+}
+
 // IsSquare returns true if image has equally-long sides.
 func (i Icon) IsSquare() bool { return i.Width == i.Height }
 
 // Copy returns a new Icon with the same values as this one.
-func (i Icon) Copy() Icon {
-	return Icon{
+func (i Icon) Copy() *Icon {
+	return &Icon{
 		URL:      i.URL,
 		MimeType: i.MimeType,
 		FileExt:  i.FileExt,
@@ -42,7 +48,7 @@ func (i Icon) Copy() Icon {
 
 // ByWidth sorts icons by width (largest first), and then by image type
 // (PNG > JPEG > SVG > ICO).
-type ByWidth []Icon
+type ByWidth []*Icon
 
 // Implement sort.Interface
 func (v ByWidth) Len() int      { return len(v) }
@@ -71,8 +77,8 @@ func (v ByWidth) Less(i, j int) bool {
 }
 
 // Check missing values, remove duplicates, sort.
-func (p *parser) postProcessIcons(icons ByWidth) ByWidth {
-	tidied := map[string]Icon{}
+func (p *parser) postProcessIcons(icons []*Icon) []*Icon {
+	tidied := map[string]*Icon{}
 	for _, icon := range icons {
 		icon.URL = p.absURL(icon.URL)
 
@@ -97,20 +103,24 @@ func (p *parser) postProcessIcons(icons ByWidth) ByWidth {
 		tidied[icon.Hash] = icon
 	}
 
-	icons = make([]Icon, len(tidied))
-
-	var i int
+	icons = []*Icon{}
 	for _, icon := range tidied {
-		icons[i] = icon
-		i++
+		for _, fun := range p.find.filters {
+			if icon = fun(icon); icon == nil {
+				break
+			}
+		}
+		if icon != nil {
+			icons = append(icons, icon)
+		}
 	}
 
-	sort.Sort(icons)
+	sort.Sort(ByWidth(icons))
 	return icons
 }
 
 // returns a hash of icon's URL and size.
-func iconHash(i Icon) string {
+func iconHash(i *Icon) string {
 	s := fmt.Sprintf("%s-%dx%d", i.URL, i.Width, i.Height)
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
 }
