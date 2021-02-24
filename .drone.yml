@@ -1,7 +1,20 @@
 kind: pipeline
 name: continuous-integration
 
+trigger:
+  event:
+    - push
+    - pull_request
+
 steps:
+  - name: dns-check
+    image: golang
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      - cat /etc/resolv.conf
+
   - name: deps
     image: golang
     volumes:

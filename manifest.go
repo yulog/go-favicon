@@ -7,7 +7,7 @@ package favicon
 import (
 	"encoding/json"
 	"io"
-	"net/url"
+	urls "net/url"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -29,11 +29,11 @@ type size struct {
 	w, h int
 }
 
-func (p *parser) parseManifest(u string) []Icon {
-	p.f.log.Printf("loading manifest %q ...", u)
-	rc, err := p.f.fetchURL(u)
+func (p *parser) parseManifest(url string) []Icon {
+	p.find.log.Printf("loading manifest %q ...", url)
+	rc, err := p.find.fetchURL(url)
 	if err != nil {
-		p.f.log.Printf("[ERROR] parse manifest: %v", err)
+		p.find.log.Printf("[ERROR] parse manifest: %v", err)
 		return nil
 	}
 	defer rc.Close()
@@ -50,12 +50,12 @@ func (p *parser) parseManifestReader(r io.Reader) []Icon {
 
 	dec := json.NewDecoder(r)
 	if err = dec.Decode(&man); err != nil {
-		p.f.log.Printf("[ERROR] parse manifest: %v", err)
+		p.find.log.Printf("[ERROR] parse manifest: %v", err)
 	}
 	for _, mi := range man.Icons {
 		// TODO: make URL relative to manifest, not page
 		mi.URL = p.absURL(mi.URL)
-		p.f.log.Printf("(manifest) %s", mi.URL)
+		p.find.log.Printf("(manifest) %s", mi.URL)
 		for _, sz := range parseSizes(mi.RawSizes) {
 			icon := Icon{
 				URL:    mi.URL,
@@ -91,21 +91,21 @@ func parseSizes(s string) []size {
 }
 
 // find dimensions in URL
-func extractSizeFromURL(u string) *size {
+func extractSizeFromURL(url string) *size {
 	// try to find WxH pattern
-	v := parseSizes(u)
+	v := parseSizes(url)
 	if len(v) > 0 {
 		return &v[0]
 	}
 
 	// look for -NNN at end of filename
-	p, err := url.Parse(u)
+	u, err := urls.Parse(url)
 	if err != nil {
 		return nil
 	}
 
 	var (
-		name = filepath.Base(p.Path)
+		name = filepath.Base(u.Path)
 		ext  = filepath.Ext(name)
 	)
 

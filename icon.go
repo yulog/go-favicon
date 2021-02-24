@@ -40,24 +40,25 @@ func (i Icon) Copy() Icon {
 	}
 }
 
-// Icons is a collection of icons for a URL.
-// It implements sort.Interface and sorts icons by width (largest first).
-type Icons []Icon
+// ByWidth sorts icons by width (largest first), and then by image type
+// (PNG > JPEG > SVG > ICO).
+type ByWidth []Icon
 
 // Implement sort.Interface
-func (v Icons) Len() int      { return len(v) }
-func (v Icons) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+func (v ByWidth) Len() int      { return len(v) }
+func (v ByWidth) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
 
 // used for sorting icons
 // higher number = higher priority
 var formatRank = map[string]int{
 	"image/png":                10,
-	"image/svg":                9,
-	"image/x-icon":             8, // .ico
-	"image/vnd.microsoft.icon": 8, // .ico
+	"image/jpeg":               9,
+	"image/svg":                8,
+	"image/x-icon":             7, // .ico
+	"image/vnd.microsoft.icon": 7, // .ico
 }
 
-func (v Icons) Less(i, j int) bool {
+func (v ByWidth) Less(i, j int) bool {
 	a, b := v[i], v[j]
 	if a.Width != b.Width {
 		return a.Width > b.Width
@@ -70,7 +71,7 @@ func (v Icons) Less(i, j int) bool {
 }
 
 // Check missing values, remove duplicates, sort.
-func (p *parser) postProcessIcons(icons Icons) Icons {
+func (p *parser) postProcessIcons(icons ByWidth) ByWidth {
 	tidied := map[string]Icon{}
 	for _, icon := range icons {
 		icon.URL = p.absURL(icon.URL)
