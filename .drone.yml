@@ -3,8 +3,9 @@ name: continuous-integration
 
 trigger:
   event:
-    - push
-    - pull_request
+      include:
+        # - push
+        - pull_request
 
 steps:
   - name: dns-check
