@@ -40,7 +40,7 @@ func TestBaseURL(t *testing.T) {
 
 	f := New(
 		WithLogger(debugLogger{}),
-		OnlyMimeType("image/x-icon"),
+		OnlyICO,
 		IgnoreWellKnown,
 		IgnoreManifest,
 	)

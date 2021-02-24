@@ -8,13 +8,13 @@ trigger:
         - pull_request
 
 steps:
-  - name: dns-check
-    image: golang
-    volumes:
-      - name: deps
-        path: /go
-    commands:
-      - cat /etc/resolv.conf
+  # - name: dns-check
+  #   image: golang
+  #   volumes:
+  #     - name: deps
+  #       path: /go
+  #   commands:
+  #     - cat /etc/resolv.conf
 
   - name: deps
     image: golang
