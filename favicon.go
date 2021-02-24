@@ -59,11 +59,13 @@ func WithClient(client *http.Client) Option {
 	}
 }
 
-// IgnoreWellKnown configures Finder to ignore common locations like /favicon.ico.
-func IgnoreWellKnown(f *Finder) { f.ignoreWellKnown = true }
+var (
+	// IgnoreWellKnown configures Finder to ignore common locations like /favicon.ico.
+	IgnoreWellKnown Option = func(f *Finder) { f.ignoreWellKnown = true }
 
-// IgnoreManifest configures Finder to ignore manifest.json files.
-func IgnoreManifest(f *Finder) { f.ignoreManifest = true }
+	// IgnoreManifest configures Finder to ignore manifest.json files.
+	IgnoreManifest Option = func(f *Finder) { f.ignoreManifest = true }
+)
 
 // Finder discovers favicons for a URL.
 // By default, a Finder looks in the following places:
@@ -102,21 +104,21 @@ func New(option ...Option) *Finder {
 }
 
 // Find finds favicons for URL.
-func Find(url string) (ByWidth, error) { return finder.Find(url) }
+func Find(url string) ([]Icon, error) { return finder.Find(url) }
 
 // Find finds favicons for URL.
-func (f *Finder) Find(u string) (ByWidth, error) {
+func (f *Finder) Find(u string) ([]Icon, error) {
 	return f.newParser().parseURL(u)
 }
 
 // FindReader finds a favicon in HTML. It accepts an optional base URL, which
 // is used to resolve relative links.
-func FindReader(r io.Reader, baseURL ...string) (ByWidth, error) {
+func FindReader(r io.Reader, baseURL ...string) ([]Icon, error) {
 	return finder.FindReader(r, baseURL...)
 }
 
 // FindReader finds a favicon in HTML.
-func (f *Finder) FindReader(r io.Reader, baseURL ...string) (ByWidth, error) {
+func (f *Finder) FindReader(r io.Reader, baseURL ...string) ([]Icon, error) {
 	p := f.newParser()
 	if len(baseURL) > 0 {
 		u, err := urls.Parse(baseURL[0])
@@ -128,7 +130,7 @@ func (f *Finder) FindReader(r io.Reader, baseURL ...string) (ByWidth, error) {
 	return p.parseReader(r)
 }
 
-// Retrieve a URL and return response body. Returns an error if response status < 300.
+// Retrieve a URL and return response body. Returns an error if response status >= 300.
 func (f *Finder) fetchURL(url string) (io.ReadCloser, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -154,11 +156,11 @@ type parser struct {
 	baseURL *urls.URL
 	charset string
 
-	f *Finder
+	find *Finder
 }
 
 func (f *Finder) newParser() *parser {
-	return &parser{f: f}
+	return &parser{find: f}
 }
 
 func (p *parser) absURL(url string) string {
@@ -176,6 +178,7 @@ func (p *parser) absURL(url string) string {
 	return url
 }
 
+// return MIME type based on file extension in URL
 func mimeTypeURL(url string) string {
 	u, err := urls.Parse(url)
 	if err != nil {

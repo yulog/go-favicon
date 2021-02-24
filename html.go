@@ -21,7 +21,7 @@ func (p *parser) parseURL(url string) (ByWidth, error) {
 	}
 	p.baseURL = u
 
-	rc, err := p.f.fetchURL(url)
+	rc, err := p.find.fetchURL(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "fetch page")
 	}
@@ -102,10 +102,10 @@ func (p *parser) parse(doc *gq.Document) (ByWidth, error) {
 
 	icons = append(icons, p.parseOpenGraph(opengraph)...)
 	icons = append(icons, p.parseTwitter(twitter)...)
-	if !p.f.ignoreManifest {
+	if !p.find.ignoreManifest {
 		icons = append(icons, p.parseManifest(manifestURL)...)
 	}
-	if !p.f.ignoreWellKnown {
+	if !p.find.ignoreWellKnown {
 		icons = append(icons, p.findWellKnownIcons()...)
 	}
 
@@ -143,7 +143,7 @@ func (p *parser) parseLink(sel *gq.Selection) []Icon {
 		icons = append(icons, icon)
 	}
 
-	p.f.log.Printf("(link) %s", icon.URL)
+	p.find.log.Printf("(link) %s", icon.URL)
 	return icons
 }
 

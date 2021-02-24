@@ -21,13 +21,13 @@ func (p *parser) findWellKnownIcons() []Icon {
 	)
 	for _, name := range IconNames {
 		u := root + name
-		r, err := p.f.fetchURL(u)
+		r, err := p.find.fetchURL(u)
 		if err != nil {
 			continue
 		}
 		r.Close()
 
-		p.f.log.Printf("(well-known) %s", u)
+		p.find.log.Printf("(well-known) %s", u)
 		icons = append(icons, Icon{URL: u})
 	}
 

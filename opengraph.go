@@ -20,7 +20,7 @@ func (p *parser) parseOpenGraph(kv []string) []Icon {
 				icons = append(icons, *icon)
 			}
 			icon = &Icon{URL: v}
-			p.f.log.Printf("(opengraph) %s", icon.URL)
+			p.find.log.Printf("(opengraph) %s", icon.URL)
 		case "og:image:type":
 			if icon != nil {
 				icon.MimeType = v

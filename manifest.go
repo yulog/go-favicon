@@ -30,10 +30,10 @@ type size struct {
 }
 
 func (p *parser) parseManifest(url string) []Icon {
-	p.f.log.Printf("loading manifest %q ...", url)
-	rc, err := p.f.fetchURL(url)
+	p.find.log.Printf("loading manifest %q ...", url)
+	rc, err := p.find.fetchURL(url)
 	if err != nil {
-		p.f.log.Printf("[ERROR] parse manifest: %v", err)
+		p.find.log.Printf("[ERROR] parse manifest: %v", err)
 		return nil
 	}
 	defer rc.Close()
@@ -50,12 +50,12 @@ func (p *parser) parseManifestReader(r io.Reader) []Icon {
 
 	dec := json.NewDecoder(r)
 	if err = dec.Decode(&man); err != nil {
-		p.f.log.Printf("[ERROR] parse manifest: %v", err)
+		p.find.log.Printf("[ERROR] parse manifest: %v", err)
 	}
 	for _, mi := range man.Icons {
 		// TODO: make URL relative to manifest, not page
 		mi.URL = p.absURL(mi.URL)
-		p.f.log.Printf("(manifest) %s", mi.URL)
+		p.find.log.Printf("(manifest) %s", mi.URL)
 		for _, sz := range parseSizes(mi.RawSizes) {
 			icon := Icon{
 				URL:    mi.URL,
