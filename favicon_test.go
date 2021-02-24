@@ -41,7 +41,7 @@ func TestFindHTML(t *testing.T) {
 	f := New(WithLogger(debugLogger{}))
 	require.Nil(t, err, "unexpected error")
 
-	var icons []Icon
+	var icons []*Icon
 	icons, err = f.FindReader(file)
 	require.Nil(t, err, "unexpected error")
 	assert.Equal(t, 6, len(icons), "unexpected favicon count")

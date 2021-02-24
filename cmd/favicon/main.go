@@ -85,7 +85,7 @@ func main() {
 	// log.Printf("%d icon(s) found for %q", len(icons), u)
 
 	if *flagSquare {
-		var clean []favicon.Icon
+		var clean []*favicon.Icon
 		for _, icon := range icons {
 			if icon.IsSquare() {
 				clean = append(clean, icon)

@@ -6,9 +6,9 @@ package favicon
 
 import "strconv"
 
-func (p *parser) parseOpenGraph(kv []string) []Icon {
+func (p *parser) parseOpenGraph(kv []string) []*Icon {
 	var (
-		icons []Icon
+		icons []*Icon
 		icon  *Icon
 	)
 
@@ -17,7 +17,7 @@ func (p *parser) parseOpenGraph(kv []string) []Icon {
 		switch k {
 		case "og:image":
 			if icon != nil {
-				icons = append(icons, *icon)
+				icons = append(icons, icon)
 			}
 			icon = &Icon{URL: v}
 			p.find.log.Printf("(opengraph) %s", icon.URL)
@@ -40,7 +40,7 @@ func (p *parser) parseOpenGraph(kv []string) []Icon {
 		}
 	}
 	if icon != nil {
-		icons = append(icons, *icon)
+		icons = append(icons, icon)
 	}
 	return icons
 }

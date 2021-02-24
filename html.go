@@ -15,7 +15,7 @@ import (
 )
 
 // entry point for URLs
-func (p *parser) parseURL(url string) ([]Icon, error) {
+func (p *parser) parseURL(url string) ([]*Icon, error) {
 	u, err := urls.Parse(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid URL")
@@ -36,7 +36,7 @@ func (p *parser) parseURL(url string) ([]Icon, error) {
 }
 
 // entry point for io.Reader
-func (p *parser) parseReader(r io.Reader) ([]Icon, error) {
+func (p *parser) parseReader(r io.Reader) ([]*Icon, error) {
 	doc, err := gq.NewDocumentFromReader(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse HTML")
@@ -45,9 +45,9 @@ func (p *parser) parseReader(r io.Reader) ([]Icon, error) {
 }
 
 // main parser function
-func (p *parser) parse(doc *gq.Document) ([]Icon, error) {
+func (p *parser) parse(doc *gq.Document) ([]*Icon, error) {
 	var (
-		icons       []Icon
+		icons       []*Icon
 		manifestURL = p.absURL("/manifest.json")
 	)
 
@@ -127,13 +127,13 @@ func (p *parser) parse(doc *gq.Document) ([]Icon, error) {
 }
 
 // extract icons defined in <link../> tags
-func (p *parser) parseLink(sel *gq.Selection) []Icon {
+func (p *parser) parseLink(sel *gq.Selection) []*Icon {
 	var (
 		href, _ = sel.Attr("href")
 		typ, _  = sel.Attr("type")
 		size, _ = sel.Attr("sizes")
-		icons   []Icon
-		icon    Icon
+		icons   []*Icon
+		icon    = &Icon{}
 	)
 
 	if href = p.absURL(href); href == "" {

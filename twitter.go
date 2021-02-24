@@ -6,9 +6,9 @@ package favicon
 
 import "strconv"
 
-func (p *parser) parseTwitter(kv []string) []Icon {
+func (p *parser) parseTwitter(kv []string) []*Icon {
 	var (
-		icons []Icon
+		icons []*Icon
 		icon  *Icon
 	)
 	for i := 0; i < len(kv)-1; i += 2 {
@@ -16,7 +16,7 @@ func (p *parser) parseTwitter(kv []string) []Icon {
 		switch k {
 		case "twitter:image:src", "twitter:image":
 			if icon != nil {
-				icons = append(icons, *icon)
+				icons = append(icons, icon)
 			}
 			icon = &Icon{URL: v}
 			p.find.log.Printf("(twitter) %s", icon.URL)
@@ -35,7 +35,7 @@ func (p *parser) parseTwitter(kv []string) []Icon {
 		}
 	}
 	if icon != nil {
-		icons = append(icons, *icon)
+		icons = append(icons, icon)
 	}
 	return icons
 }
