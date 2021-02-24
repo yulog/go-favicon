@@ -6,7 +6,7 @@ package favicon
 
 import (
 	"io"
-	"net/url"
+	urls "net/url"
 	"path/filepath"
 	"strings"
 
@@ -14,14 +14,14 @@ import (
 	"github.com/friendsofgo/errors"
 )
 
-func (p *parser) parseURL(u string) (Icons, error) {
-	URL, err := url.Parse(u)
+func (p *parser) parseURL(url string) (Icons, error) {
+	u, err := urls.Parse(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid URL")
 	}
-	p.baseURL = URL
+	p.baseURL = u
 
-	rc, err := p.f.fetchURL(u)
+	rc, err := p.f.fetchURL(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "fetch page")
 	}
@@ -55,15 +55,14 @@ func (p *parser) parse(doc *gq.Document) (Icons, error) {
 			icons = append(icons, p.parseLink(sel)...)
 		case "apple-touch-icon", "apple-touch-icon-precomposed":
 			icons = append(icons, p.parseLink(sel)...)
-		// for site-specific browser apps
-		// https://fluidapp.com/
+		// site-specific browser apps (https://fluidapp.com/)
 		case "fluid-icon":
 			icons = append(icons, p.parseLink(sel)...)
 		case "manifest":
-			u, _ := sel.Attr("href")
-			u = p.absURL(u)
-			if u != "" {
-				manifestURL = u
+			url, _ := sel.Attr("href")
+			url = p.absURL(url)
+			if url != "" {
+				manifestURL = url
 			}
 		}
 	})
@@ -148,11 +147,11 @@ func (p *parser) parseLink(sel *gq.Selection) []Icon {
 	return icons
 }
 
-// extract file extension from a URL.
-func fileExt(u string) string {
-	p, err := url.Parse(u)
+// extract file extension from a URL
+func fileExt(url string) string {
+	u, err := urls.Parse(url)
 	if err != nil {
 		return ""
 	}
-	return strings.TrimPrefix(filepath.Ext(p.Path), ".")
+	return strings.TrimPrefix(filepath.Ext(u.Path), ".")
 }

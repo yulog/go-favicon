@@ -7,7 +7,7 @@ package favicon
 import (
 	"net/http"
 	"net/http/httptest"
-	"net/url"
+	urls "net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,7 +20,7 @@ func TestParserAbsURL(t *testing.T) {
 	tests := []struct {
 		name  string
 		in, x string
-		base  *url.URL
+		base  *urls.URL
 	}{
 		{"empty", "", "", nil},
 		{"onlyBaseURL", "", "", mustURL("https://github.com")},
@@ -90,8 +90,8 @@ func TestParseSize(t *testing.T) {
 	}
 }
 
-func mustURL(s string) *url.URL {
-	u, err := url.Parse(s)
+func mustURL(s string) *urls.URL {
+	u, err := urls.Parse(s)
 	if err != nil {
 		panic(err)
 	}

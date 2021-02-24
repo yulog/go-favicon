@@ -15,7 +15,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"net/url"
+	urls "net/url"
 	"path/filepath"
 
 	"github.com/friendsofgo/errors"
@@ -109,7 +109,8 @@ func (f *Finder) Find(u string) (Icons, error) {
 	return f.newParser().parseURL(u)
 }
 
-// FindReader finds a favicon in HTML.
+// FindReader finds a favicon in HTML. It accepts an optional base URL, which
+// is used to resolve relative links.
 func FindReader(r io.Reader, baseURL ...string) (Icons, error) {
 	return finder.FindReader(r, baseURL...)
 }
@@ -118,7 +119,7 @@ func FindReader(r io.Reader, baseURL ...string) (Icons, error) {
 func (f *Finder) FindReader(r io.Reader, baseURL ...string) (Icons, error) {
 	p := f.newParser()
 	if len(baseURL) > 0 {
-		u, err := url.Parse(baseURL[0])
+		u, err := urls.Parse(baseURL[0])
 		if err != nil {
 			return nil, errors.Wrap(err, "reader base URL")
 		}
@@ -150,7 +151,7 @@ func (f *Finder) fetchURL(url string) (io.ReadCloser, error) {
 }
 
 type parser struct {
-	baseURL *url.URL
+	baseURL *urls.URL
 	charset string
 
 	f *Finder
@@ -160,25 +161,25 @@ func (f *Finder) newParser() *parser {
 	return &parser{f: f}
 }
 
-func (p *parser) absURL(u string) string {
-	if u == "" || p.baseURL == nil {
-		return u
+func (p *parser) absURL(url string) string {
+	if url == "" || p.baseURL == nil {
+		return url
 	}
 
-	URL, err := url.Parse(u)
+	u, err := urls.Parse(url)
 	if err != nil {
 		return ""
 	}
 	if p.baseURL != nil {
-		return p.baseURL.ResolveReference(URL).String()
+		return p.baseURL.ResolveReference(u).String()
 	}
-	return u
+	return url
 }
 
-func mimeTypeURL(u string) string {
-	p, err := url.Parse(u)
+func mimeTypeURL(url string) string {
+	u, err := urls.Parse(url)
 	if err != nil {
 		return ""
 	}
-	return mime.TypeByExtension(filepath.Ext(p.Path))
+	return mime.TypeByExtension(filepath.Ext(u.Path))
 }
