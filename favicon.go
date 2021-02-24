@@ -102,21 +102,21 @@ func New(option ...Option) *Finder {
 }
 
 // Find finds favicons for URL.
-func Find(url string) (Icons, error) { return finder.Find(url) }
+func Find(url string) (ByWidth, error) { return finder.Find(url) }
 
 // Find finds favicons for URL.
-func (f *Finder) Find(u string) (Icons, error) {
+func (f *Finder) Find(u string) (ByWidth, error) {
 	return f.newParser().parseURL(u)
 }
 
 // FindReader finds a favicon in HTML. It accepts an optional base URL, which
 // is used to resolve relative links.
-func FindReader(r io.Reader, baseURL ...string) (Icons, error) {
+func FindReader(r io.Reader, baseURL ...string) (ByWidth, error) {
 	return finder.FindReader(r, baseURL...)
 }
 
 // FindReader finds a favicon in HTML.
-func (f *Finder) FindReader(r io.Reader, baseURL ...string) (Icons, error) {
+func (f *Finder) FindReader(r io.Reader, baseURL ...string) (ByWidth, error) {
 	p := f.newParser()
 	if len(baseURL) > 0 {
 		u, err := urls.Parse(baseURL[0])

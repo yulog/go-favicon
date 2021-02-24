@@ -14,7 +14,7 @@ import (
 	"github.com/friendsofgo/errors"
 )
 
-func (p *parser) parseURL(url string) (Icons, error) {
+func (p *parser) parseURL(url string) (ByWidth, error) {
 	u, err := urls.Parse(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid URL")
@@ -33,7 +33,7 @@ func (p *parser) parseURL(url string) (Icons, error) {
 	return p.parse(doc)
 }
 
-func (p *parser) parseReader(r io.Reader) (Icons, error) {
+func (p *parser) parseReader(r io.Reader) (ByWidth, error) {
 	doc, err := gq.NewDocumentFromReader(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse HTML")
@@ -42,9 +42,9 @@ func (p *parser) parseReader(r io.Reader) (Icons, error) {
 }
 
 // main parser function
-func (p *parser) parse(doc *gq.Document) (Icons, error) {
+func (p *parser) parse(doc *gq.Document) (ByWidth, error) {
 	var (
-		icons       Icons
+		icons       ByWidth
 		manifestURL = p.absURL("/manifest.json")
 	)
 	doc.Find("link").Each(func(i int, sel *gq.Selection) {
