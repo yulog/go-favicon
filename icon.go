@@ -71,7 +71,7 @@ func (v ByWidth) Less(i, j int) bool {
 }
 
 // Check missing values, remove duplicates, sort.
-func (p *parser) postProcessIcons(icons ByWidth) ByWidth {
+func (p *parser) postProcessIcons(icons []Icon) []Icon {
 	tidied := map[string]Icon{}
 	for _, icon := range icons {
 		icon.URL = p.absURL(icon.URL)
@@ -105,7 +105,7 @@ func (p *parser) postProcessIcons(icons ByWidth) ByWidth {
 		i++
 	}
 
-	sort.Sort(icons)
+	sort.Sort(ByWidth(icons))
 	return icons
 }
 

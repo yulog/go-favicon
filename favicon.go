@@ -107,8 +107,8 @@ func New(option ...Option) *Finder {
 func Find(url string) ([]Icon, error) { return finder.Find(url) }
 
 // Find finds favicons for URL.
-func (f *Finder) Find(u string) ([]Icon, error) {
-	return f.newParser().parseURL(u)
+func (f *Finder) Find(url string) ([]Icon, error) {
+	return f.newParser().parseURL(url)
 }
 
 // FindReader finds a favicon in HTML. It accepts an optional base URL, which
