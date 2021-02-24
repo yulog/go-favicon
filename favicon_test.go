@@ -56,7 +56,7 @@ func TestBaseURL(t *testing.T) {
 	// for _, i := range icons {
 	// 	fmt.Println(i)
 	// }
-	assert.Equal(t, 1, len(icons), "unexpected favicon count")
+	require.Equal(t, 1, len(icons), "unexpected favicon count")
 	assert.Equal(t, x, icons[0].URL, "unexpected favicon URL")
 }
 
