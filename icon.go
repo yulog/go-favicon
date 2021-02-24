@@ -25,6 +25,12 @@ type Icon struct {
 	Hash string `json:"hash"`
 }
 
+// String implements Stringer.
+func (i Icon) String() string {
+	return fmt.Sprintf("Icon{\n\tURL: %q,\n\tMimeType: %q,\n\tWidth: %d,\n\tHeight: %d,\n\tHash: %q\n}",
+		i.URL, i.MimeType, i.Width, i.Height, i.Hash)
+}
+
 // IsSquare returns true if image has equally-long sides.
 func (i Icon) IsSquare() bool { return i.Width == i.Height }
 
@@ -97,12 +103,16 @@ func (p *parser) postProcessIcons(icons []*Icon) []*Icon {
 		tidied[icon.Hash] = icon
 	}
 
-	icons = make([]*Icon, len(tidied))
-
-	var i int
+	icons = []*Icon{}
 	for _, icon := range tidied {
-		icons[i] = icon
-		i++
+		for _, fun := range p.find.filters {
+			if icon = fun(icon); icon == nil {
+				break
+			}
+		}
+		if icon != nil {
+			icons = append(icons, icon)
+		}
 	}
 
 	sort.Sort(ByWidth(icons))

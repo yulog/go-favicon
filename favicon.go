@@ -21,7 +21,8 @@ import (
 	"github.com/friendsofgo/errors"
 )
 
-const userAgent = "FaviconFinder/0.1"
+// UserAgent is sent in the User-Agent HTTP header.
+var UserAgent = "go-favicon/0.1"
 
 // Logger describes the logger used by Finder.
 type Logger interface {
@@ -42,8 +43,12 @@ func init() {
 	finder = New()
 }
 
+// Filter accepts/rejects/modifies Icons. If if returns nil, the Icon is ignored.
+// Set a Finder's filters by passing WithFilter(...) to New().
+type Filter func(*Icon) *Icon
+
 // Option configures Finder. Pass Options to New().
-type Option func(f *Finder)
+type Option func(*Finder)
 
 // WithLogger sets the logger used by Finder.
 func WithLogger(logger Logger) Option {
@@ -59,12 +64,99 @@ func WithClient(client *http.Client) Option {
 	}
 }
 
+// WithFilter only returns Icons accepted by Filter functions.
+func WithFilter(filter ...Filter) Option {
+	return func(f *Finder) {
+		f.filters = append(f.filters, filter...)
+	}
+}
+
+// OnlyMimeType only finds Icons that have one of the specified MIME types,
+// e.g. "image/png" or "image/jpeg".
+func OnlyMimeType(mimeType ...string) Option {
+	return WithFilter(func(i *Icon) *Icon {
+		for _, s := range mimeType {
+			if i.MimeType == s {
+				return i
+			}
+		}
+		return nil
+	})
+}
+
+// MinWidth ignores icons smaller than the given width.
+func MinWidth(width int) Option {
+	return WithFilter(func(icon *Icon) *Icon {
+		if icon.Width < width {
+			return nil
+		}
+		return icon
+	})
+}
+
+// MaxWidth ignores icons larger than the given width.
+func MaxWidth(width int) Option {
+	return WithFilter(func(icon *Icon) *Icon {
+		if icon.Width > width {
+			return nil
+		}
+		return icon
+	})
+}
+
+// MinHeight ignores icons smaller than the given height.
+func MinHeight(height int) Option {
+	return WithFilter(func(icon *Icon) *Icon {
+		if icon.Height < height {
+			return nil
+		}
+		return icon
+	})
+}
+
+// MaxHeight ignores icons larger than the given height.
+func MaxHeight(height int) Option {
+	return WithFilter(func(icon *Icon) *Icon {
+		if icon.Height > height {
+			return nil
+		}
+		return icon
+	})
+}
+
 var (
-	// IgnoreWellKnown configures Finder to ignore common locations like /favicon.ico.
+	// IgnoreWellKnown ignores common locations like /favicon.ico.
 	IgnoreWellKnown Option = func(f *Finder) { f.ignoreWellKnown = true }
 
-	// IgnoreManifest configures Finder to ignore manifest.json files.
+	// IgnoreManifest ignores manifest.json files.
 	IgnoreManifest Option = func(f *Finder) { f.ignoreManifest = true }
+
+	// IgnoreNoSize ignores icons with no specified size.
+	IgnoreNoSize Option = WithFilter(func(icon *Icon) *Icon {
+		if icon.Width == 0 || icon.Height == 0 {
+			return nil
+		}
+		return icon
+	})
+
+	// OnlyPNG ignores non-PNG files.
+	OnlyPNG Option = OnlyMimeType("image/png")
+
+	// OnlyICO ignores non-ICO files.
+	OnlyICO Option = WithFilter(func(icon *Icon) *Icon {
+		if icon.MimeType == "image/x-icon" || icon.MimeType == "image/vnd.microsoft.icon" {
+			return icon
+		}
+		return nil
+	})
+
+	// OnlySquare ignores non-square files. NOTE: Icons without a known size are also returned.
+	OnlySquare Option = WithFilter(func(icon *Icon) *Icon {
+		if !icon.IsSquare() {
+			return nil
+		}
+		return icon
+	})
 )
 
 // Finder discovers favicons for a URL.
@@ -89,13 +181,15 @@ type Finder struct {
 	ignoreWellKnown bool
 	log             Logger
 	client          *http.Client
+	filters         []Filter
 }
 
 // New creates a new Finder configured with the given options.
 func New(option ...Option) *Finder {
 	f := &Finder{
-		log:    nullLogger{},
-		client: client,
+		log:     nullLogger{},
+		client:  client,
+		filters: []Filter{},
 	}
 	for _, fn := range option {
 		fn(f)
@@ -136,7 +230,7 @@ func (f *Finder) fetchURL(url string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "request URL")
 	}
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", UserAgent)
 
 	resp, err := f.client.Do(req)
 	if err != nil {
