@@ -21,6 +21,7 @@ import (
 	"net/http"
 	urls "net/url"
 	"path/filepath"
+	"sort"
 
 	gq "github.com/PuerkitoBio/goquery"
 	"github.com/friendsofgo/errors"
@@ -53,6 +54,10 @@ func init() {
 // Set a Finder's filters by passing WithFilter(...) to New().
 type Filter func(*Icon) *Icon
 
+// Sorter Icons.
+// Set a Finder's sorter by passing WithSorter(...) to New().
+type Sorter func([]*Icon) sort.Interface
+
 // Option configures Finder. Pass Options to New().
 type Option func(*Finder)
 
@@ -74,6 +79,13 @@ func WithClient(client *http.Client) Option {
 func WithFilter(filter ...Filter) Option {
 	return func(f *Finder) {
 		f.filters = append(f.filters, filter...)
+	}
+}
+
+// WithSorter configures Finder to use the given Sorter.
+func WithSorter(sorter Sorter) Option {
+	return func(f *Finder) {
+		f.sorter = sorter
 	}
 }
 
@@ -163,6 +175,15 @@ var (
 		}
 		return icon
 	})
+
+	// SortByWidth sorts icons by width (largest first), and then by image type
+	// (PNG > JPEG > SVG > ICO).
+	SortByWidth Option = WithSorter(func(icons []*Icon) sort.Interface {
+		return ByWidth(icons)
+	})
+
+	// NopSort represents a no operation sorting.
+	NopSort Option = WithSorter(nil)
 )
 
 // Finder discovers favicons for a URL.
@@ -190,6 +211,7 @@ type Finder struct {
 	log             Logger
 	client          *http.Client
 	filters         []Filter
+	sorter          Sorter
 }
 
 // New creates a new Finder configured with the given options.
@@ -199,6 +221,7 @@ func New(option ...Option) *Finder {
 		client:  client,
 		filters: []Filter{},
 	}
+	SortByWidth(f) // Default sort option
 	for _, fn := range option {
 		fn(f)
 	}

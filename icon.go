@@ -1,3 +1,7 @@
+// MIT License
+//
+// Copyright (c) 2024 yulog
+//
 // Copyright (c) 2020 Dean Jackson <deanishe@deanishe.net>
 // MIT Licence applies http://opensource.org/licenses/MIT
 // Created on 2020-11-09
@@ -115,7 +119,9 @@ func (p *parser) postProcessIcons(icons []*Icon) []*Icon {
 		}
 	}
 
-	sort.Sort(ByWidth(icons))
+	if p.find.sorter != nil {
+		sort.Sort(p.find.sorter(icons))
+	}
 	return icons
 }
 
