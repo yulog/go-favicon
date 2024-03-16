@@ -1,3 +1,7 @@
+// MIT License
+//
+// Copyright (c) 2024 yulog
+//
 // Copyright (c) 2020 Dean Jackson <deanishe@deanishe.net>
 // MIT Licence applies http://opensource.org/licenses/MIT
 // Created on 2020-11-09
@@ -18,7 +22,9 @@ import (
 	urls "net/url"
 	"path/filepath"
 
+	gq "github.com/PuerkitoBio/goquery"
 	"github.com/friendsofgo/errors"
+	"golang.org/x/net/html"
 )
 
 // UserAgent is sent in the User-Agent HTTP header.
@@ -162,17 +168,19 @@ var (
 // Finder discovers favicons for a URL.
 // By default, a Finder looks in the following places:
 //
-//     - The HTML page at the given URL for...
-//         - icons in <link> tags
-//         - Open Graph images
-//         - Twitter images
-//     - The manifest file...
-//         - defined in the HTML page
-//           -- or --
-//         - /manifest.json
-//     - Standard favicon paths
-//         - /favicon.ico
-//         - /apple-touch-icon.png
+// The HTML page at the given URL for...
+//   - icons in <link> tags
+//   - Open Graph images
+//   - Twitter images
+//
+// The manifest file...
+//   - defined in the HTML page
+//     -- or --
+//   - /manifest.json
+//
+// Standard favicon paths
+//   - /favicon.ico
+//   - /apple-touch-icon.png
 //
 // Pass the IgnoreManifest and/or IgnoreWellKnown Options to New() to
 // reduce the number of requests made to webservers.
@@ -222,6 +230,44 @@ func (f *Finder) FindReader(r io.Reader, baseURL ...string) ([]*Icon, error) {
 		p.baseURL = u
 	}
 	return p.parseReader(r)
+}
+
+// FindNode finds a favicon in HTML Node. It accepts an optional base URL, which
+// is used to resolve relative links.
+func FindNode(n *html.Node, baseURL ...string) ([]*Icon, error) {
+	return finder.FindNode(n, baseURL...)
+}
+
+// FindNode finds a favicon in HTML Node.
+func (f *Finder) FindNode(n *html.Node, baseURL ...string) ([]*Icon, error) {
+	p := f.newParser()
+	if len(baseURL) > 0 {
+		u, err := urls.Parse(baseURL[0])
+		if err != nil {
+			return nil, errors.Wrap(err, "node base URL")
+		}
+		p.baseURL = u
+	}
+	return p.parseNode(n)
+}
+
+// FindGoQueryDocument finds a favicon in GoQueryDocument. It accepts an optional base URL, which
+// is used to resolve relative links.
+func FindGoQueryDocument(doc *gq.Document, baseURL ...string) ([]*Icon, error) {
+	return finder.FindGoQueryDocument(doc, baseURL...)
+}
+
+// FindGoQueryDocument finds a favicon in GoQueryDocument.
+func (f *Finder) FindGoQueryDocument(doc *gq.Document, baseURL ...string) ([]*Icon, error) {
+	p := f.newParser()
+	if len(baseURL) > 0 {
+		u, err := urls.Parse(baseURL[0])
+		if err != nil {
+			return nil, errors.Wrap(err, "node base URL")
+		}
+		p.baseURL = u
+	}
+	return p.parseGoQueryDocument(doc)
 }
 
 // Retrieve a URL and return response body. Returns an error if response status >= 300.

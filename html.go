@@ -1,3 +1,7 @@
+// MIT License
+//
+// Copyright (c) 2024 yulog
+//
 // Copyright (c) 2020 Dean Jackson <deanishe@deanishe.net>
 // MIT Licence applies http://opensource.org/licenses/MIT
 // Created on 2020-11-09
@@ -12,6 +16,7 @@ import (
 
 	gq "github.com/PuerkitoBio/goquery"
 	"github.com/friendsofgo/errors"
+	"golang.org/x/net/html"
 )
 
 // entry point for URLs
@@ -41,6 +46,17 @@ func (p *parser) parseReader(r io.Reader) ([]*Icon, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "parse HTML")
 	}
+	return p.parse(doc)
+}
+
+// entry point for html.Node
+func (p *parser) parseNode(n *html.Node) ([]*Icon, error) {
+	doc := gq.NewDocumentFromNode(n)
+	return p.parse(doc)
+}
+
+// entry point for gq.Document
+func (p *parser) parseGoQueryDocument(doc *gq.Document) ([]*Icon, error) {
 	return p.parse(doc)
 }
 
