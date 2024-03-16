@@ -1,3 +1,7 @@
+// MIT License
+//
+// Copyright (c) 2024 yulog
+//
 // Copyright (c) 2020 Dean Jackson <deanishe@deanishe.net>
 // MIT Licence applies http://opensource.org/licenses/MIT
 // Created on 2020-11-09
@@ -17,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/jedib0t/go-pretty/table"
-	"go.deanishe.net/favicon"
+	"github.com/yulog/go-favicon"
 )
 
 var (
