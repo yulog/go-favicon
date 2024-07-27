@@ -9,13 +9,13 @@
 package favicon
 
 import (
+	"fmt"
 	"io"
 	urls "net/url"
 	"path/filepath"
 	"strings"
 
 	gq "github.com/PuerkitoBio/goquery"
-	"github.com/friendsofgo/errors"
 	"golang.org/x/net/html"
 )
 
@@ -23,19 +23,19 @@ import (
 func (p *parser) parseURL(url string) ([]*Icon, error) {
 	u, err := urls.Parse(url)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid URL")
+		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 	p.baseURL = u
 
 	rc, err := p.find.fetchURL(url)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetch page")
+		return nil, fmt.Errorf("fetch page: %w", err)
 	}
 	defer rc.Close()
 
 	doc, err := gq.NewDocumentFromReader(rc)
 	if err != nil {
-		return nil, errors.Wrap(err, "parse HTML")
+		return nil, fmt.Errorf("parse HTML: %w", err)
 	}
 	return p.parse(doc)
 }
@@ -44,7 +44,7 @@ func (p *parser) parseURL(url string) ([]*Icon, error) {
 func (p *parser) parseReader(r io.Reader) ([]*Icon, error) {
 	doc, err := gq.NewDocumentFromReader(r)
 	if err != nil {
-		return nil, errors.Wrap(err, "parse HTML")
+		return nil, fmt.Errorf("parse HTML: %w", err)
 	}
 	return p.parse(doc)
 }

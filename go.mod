@@ -6,7 +6,6 @@ toolchain go1.22.5
 
 require (
 	github.com/PuerkitoBio/goquery v1.9.2
-	github.com/friendsofgo/errors v0.9.2
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/net v0.27.0
@@ -26,6 +25,5 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

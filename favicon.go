@@ -24,7 +24,6 @@ import (
 	"sort"
 
 	gq "github.com/PuerkitoBio/goquery"
-	"github.com/friendsofgo/errors"
 	"golang.org/x/net/html"
 )
 
@@ -248,7 +247,7 @@ func (f *Finder) FindReader(r io.Reader, baseURL ...string) ([]*Icon, error) {
 	if len(baseURL) > 0 {
 		u, err := urls.Parse(baseURL[0])
 		if err != nil {
-			return nil, errors.Wrap(err, "reader base URL")
+			return nil, fmt.Errorf("reader base URL: %w", err)
 		}
 		p.baseURL = u
 	}
@@ -267,7 +266,7 @@ func (f *Finder) FindNode(n *html.Node, baseURL ...string) ([]*Icon, error) {
 	if len(baseURL) > 0 {
 		u, err := urls.Parse(baseURL[0])
 		if err != nil {
-			return nil, errors.Wrap(err, "node base URL")
+			return nil, fmt.Errorf("node base URL: %w", err)
 		}
 		p.baseURL = u
 	}
@@ -286,7 +285,7 @@ func (f *Finder) FindGoQueryDocument(doc *gq.Document, baseURL ...string) ([]*Ic
 	if len(baseURL) > 0 {
 		u, err := urls.Parse(baseURL[0])
 		if err != nil {
-			return nil, errors.Wrap(err, "node base URL")
+			return nil, fmt.Errorf("node base URL: %w", err)
 		}
 		p.baseURL = u
 	}
@@ -297,13 +296,13 @@ func (f *Finder) FindGoQueryDocument(doc *gq.Document, baseURL ...string) ([]*Ic
 func (f *Finder) fetchURL(url string) (io.ReadCloser, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "request URL")
+		return nil, fmt.Errorf("request URL: %w", err)
 	}
 	req.Header.Set("User-Agent", UserAgent)
 
 	resp, err := f.client.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "retrieve URL")
+		return nil, fmt.Errorf("retrieve URL: %w", err)
 	}
 	f.log.Printf("[%d] %s", resp.StatusCode, url)
 
