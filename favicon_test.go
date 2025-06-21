@@ -1,3 +1,7 @@
+// MIT License
+//
+// Copyright (c) 2025 yulog
+//
 // Copyright (c) 2020 Dean Jackson <deanishe@deanishe.net>
 // MIT Licence applies http://opensource.org/licenses/MIT
 // Created on 2020-11-09
@@ -25,7 +29,7 @@ func init() {
 
 type debugLogger struct{}
 
-func (l debugLogger) Printf(format string, v ...interface{}) {
+func (l debugLogger) Printf(format string, v ...any) {
 	if verboseTest {
 		fmt.Printf(format+"\n", v...)
 	}

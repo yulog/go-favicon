@@ -32,13 +32,13 @@ var UserAgent = "go-favicon/0.1"
 
 // Logger describes the logger used by Finder.
 type Logger interface {
-	Printf(string, ...interface{})
+	Printf(string, ...any)
 }
 
 // black hole logger
 type nullLogger struct{}
 
-func (l nullLogger) Printf(format string, arg ...interface{}) {}
+func (l nullLogger) Printf(format string, arg ...any) {}
 
 var (
 	finder *Finder          // used by package-level functions
