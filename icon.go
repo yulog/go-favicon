@@ -9,9 +9,10 @@
 package favicon
 
 import (
+	"cmp"
 	"crypto/sha256"
 	"fmt"
-	"sort"
+	"slices"
 )
 
 // Icon is a favicon parsed from an HTML file or JSON manifest.
@@ -50,14 +51,6 @@ func (i Icon) Copy() *Icon {
 	}
 }
 
-// ByWidth sorts icons by width (largest first), and then by image type
-// (PNG > JPEG > SVG > ICO).
-type ByWidth []*Icon
-
-// Implement sort.Interface
-func (v ByWidth) Len() int      { return len(v) }
-func (v ByWidth) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
-
 // used for sorting icons
 // higher number = higher priority
 var formatRank = map[string]int{
@@ -68,16 +61,16 @@ var formatRank = map[string]int{
 	"image/vnd.microsoft.icon": 7, // .ico
 }
 
-func (v ByWidth) Less(i, j int) bool {
-	a, b := v[i], v[j]
-	if a.Width != b.Width {
-		return a.Width > b.Width
+// defaultCompareFunc sorts icons by width (largest first), and then by image type
+// (PNG > JPEG > SVG > ICO).
+func defaultCompareFunc(a, b *Icon) int {
+	if c := cmp.Compare(b.Width, a.Width); c != 0 {
+		return c
 	}
-	fa, fb := formatRank[a.MimeType], formatRank[b.MimeType]
-	if fa != fb {
-		return fa > fb
+	if c := cmp.Compare(formatRank[b.MimeType], formatRank[a.MimeType]); c != 0 {
+		return c
 	}
-	return a.URL < b.URL
+	return cmp.Compare(a.URL, b.URL)
 }
 
 // Check missing values, remove duplicates, sort.
@@ -119,8 +112,8 @@ func (p *parser) postProcessIcons(icons []*Icon) []*Icon {
 		}
 	}
 
-	if p.find.sorter != nil {
-		sort.Sort(p.find.sorter(icons))
+	if p.find.compare != nil {
+		slices.SortFunc(icons, p.find.compare)
 	}
 	return icons
 }

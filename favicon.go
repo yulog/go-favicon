@@ -21,7 +21,6 @@ import (
 	"net/http"
 	urls "net/url"
 	"path/filepath"
-	"sort"
 
 	gq "github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
@@ -53,9 +52,9 @@ func init() {
 // Set a Finder's filters by passing WithFilter(...) to New().
 type Filter func(*Icon) *Icon
 
-// Sorter Icons.
-// Set a Finder's sorter by passing WithSorter(...) to New().
-type Sorter func([]*Icon) sort.Interface
+// CompareFunc compares Icons for sorting.
+// Set a Finder's compare by passing WithCompareFunc(...) to New().
+type CompareFunc func(a, b *Icon) int
 
 // Option configures Finder. Pass Options to New().
 type Option func(*Finder)
@@ -81,10 +80,10 @@ func WithFilter(filter ...Filter) Option {
 	}
 }
 
-// WithSorter configures Finder to use the given Sorter.
-func WithSorter(sorter Sorter) Option {
+// WithCompareFunc configures Finder to use the given CompareFunc for sorting.
+func WithCompareFunc(compare CompareFunc) Option {
 	return func(f *Finder) {
-		f.sorter = sorter
+		f.compare = compare
 	}
 }
 
@@ -177,12 +176,13 @@ var (
 
 	// SortByWidth sorts icons by width (largest first), and then by image type
 	// (PNG > JPEG > SVG > ICO).
-	SortByWidth Option = WithSorter(func(icons []*Icon) sort.Interface {
-		return ByWidth(icons)
+	// This is default sort logic.
+	SortByWidth Option = WithCompareFunc(func(a, b *Icon) int {
+		return defaultCompareFunc(a, b)
 	})
 
 	// NopSort represents a no operation sorting.
-	NopSort Option = WithSorter(nil)
+	NopSort Option = WithCompareFunc(nil)
 )
 
 // Finder discovers favicons for a URL.
@@ -195,7 +195,7 @@ var (
 //
 // The manifest file...
 //   - defined in the HTML page
-//     -- or --
+//   - or...
 //   - /manifest.json
 //
 // Standard favicon paths
@@ -210,7 +210,7 @@ type Finder struct {
 	log             Logger
 	client          *http.Client
 	filters         []Filter
-	sorter          Sorter
+	compare         CompareFunc
 }
 
 // New creates a new Finder configured with the given options.
@@ -219,8 +219,8 @@ func New(option ...Option) *Finder {
 		log:     nullLogger{},
 		client:  client,
 		filters: []Filter{},
+		compare: defaultCompareFunc, // Default sort func
 	}
-	SortByWidth(f) // Default sort option
 	for _, fn := range option {
 		fn(f)
 	}
