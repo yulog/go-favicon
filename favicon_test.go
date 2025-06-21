@@ -110,7 +110,6 @@ func TestHTTP(t *testing.T) {
 	}
 
 	for _, td := range tests {
-		td := td
 		t.Run(td.name, func(t *testing.T) {
 			t.Parallel()
 			ts := httptest.NewServer(http.FileServer(http.Dir(td.path)))
@@ -153,7 +152,6 @@ func TestIgnore(t *testing.T) {
 	}
 
 	for _, td := range tests {
-		td := td
 		t.Run(td.name, func(t *testing.T) {
 			t.Parallel()
 			ts := httptest.NewServer(http.FileServer(http.Dir(td.path)))
@@ -201,7 +199,6 @@ func TestFilter(t *testing.T) {
 	}
 
 	for _, td := range tests {
-		td := td
 		t.Run(td.name, func(t *testing.T) {
 			t.Parallel()
 			ts := httptest.NewServer(http.FileServer(http.Dir(td.path)))

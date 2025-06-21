@@ -1,3 +1,7 @@
+// MIT License
+//
+// Copyright (c) 2025 yulog
+//
 // Copyright (c) 2020 Dean Jackson <deanishe@deanishe.net>
 // MIT Licence applies http://opensource.org/licenses/MIT
 // Created on 2020-11-10
@@ -45,7 +49,6 @@ func TestFormat(t *testing.T) {
 	}
 
 	for _, td := range tests {
-		td := td
 		t.Run(td.name, func(t *testing.T) {
 			t.Parallel()
 			ts := httptest.NewServer(http.FileServer(http.Dir(td.path)))
@@ -74,7 +77,6 @@ func TestIconCopy(t *testing.T) {
 	}
 
 	for _, td := range tests {
-		td := td
 		t.Run(td.name, func(t *testing.T) {
 			t.Parallel()
 			ts := httptest.NewServer(http.FileServer(http.Dir(td.path)))
