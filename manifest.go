@@ -1,3 +1,7 @@
+// MIT License
+//
+// Copyright (c) 2025 yulog
+//
 // Copyright (c) 2020 Dean Jackson <deanishe@deanishe.net>
 // MIT Licence applies http://opensource.org/licenses/MIT
 // Created on 2020-11-09
@@ -7,6 +11,7 @@ package favicon
 import (
 	"encoding/json"
 	"io"
+	"iter"
 	urls "net/url"
 	"path/filepath"
 	"regexp"
@@ -29,44 +34,47 @@ type size struct {
 	w, h int
 }
 
-func (p *parser) parseManifest(url string) []*Icon {
-	p.find.log.Printf("loading manifest %q ...", url)
-	rc, err := p.find.fetchURL(url)
-	if err != nil {
-		p.find.log.Printf("[ERROR] parse manifest: %v", err)
-		return nil
-	}
-	defer rc.Close()
+func (p *parser) parseManifestIter(url string) iter.Seq[*Icon] {
+	return func(yield func(*Icon) bool) {
+		p.find.log.Printf("loading manifest %q ...", url)
+		rc, err := p.find.fetchURL(url)
+		if err != nil {
+			p.find.log.Printf("[ERROR] parse manifest: %v", err)
+			return
+		}
+		defer rc.Close()
 
-	return p.parseManifestReader(rc)
-}
-
-func (p *parser) parseManifestReader(r io.Reader) []*Icon {
-	var (
-		icons []*Icon
-		man   = Manifest{}
-		err   error
-	)
-
-	dec := json.NewDecoder(r)
-	if err = dec.Decode(&man); err != nil {
-		p.find.log.Printf("[ERROR] parse manifest: %v", err)
-	}
-	for _, mi := range man.Icons {
-		// TODO: make URL relative to manifest, not page
-		mi.URL = p.absURL(mi.URL)
-		p.find.log.Printf("(manifest) %s", mi.URL)
-		for _, sz := range parseSizes(mi.RawSizes) {
-			icon := &Icon{
-				URL:    mi.URL,
-				Width:  sz.w,
-				Height: sz.h,
-			}
-			icons = append(icons, icon)
+		for icon := range p.parseManifestReaderIter(rc) {
+			yield(icon)
 		}
 	}
+}
 
-	return icons
+func (p *parser) parseManifestReaderIter(r io.Reader) iter.Seq[*Icon] {
+	var (
+		man = Manifest{}
+	)
+
+	if err := json.NewDecoder(r).Decode(&man); err != nil {
+		p.find.log.Printf("[ERROR] parse manifest: %v", err)
+	}
+	return func(yield func(*Icon) bool) {
+		for _, mi := range man.Icons {
+			// TODO: make URL relative to manifest, not page
+			mi.URL = p.absURL(mi.URL)
+			p.find.log.Printf("(manifest) %s", mi.URL)
+			for sz := range parseSizesIter(mi.RawSizes) {
+				icon := &Icon{
+					URL:    mi.URL,
+					Width:  sz.w,
+					Height: sz.h,
+				}
+				if !yield(icon) {
+					return
+				}
+			}
+		}
+	}
 }
 
 var (
@@ -74,28 +82,29 @@ var (
 	rxWidth = regexp.MustCompile(`-(\d+)$`)
 )
 
-func parseSizes(s string) []size {
+func parseSizesIter(s string) iter.Seq[size] {
 	m := rxSize.FindAllStringSubmatch(s, -1)
-	if m == nil {
-		return nil
-	}
-	var sizes []size
-	for _, l := range m {
-		for i := 1; i < len(l)-1; i += 2 {
-			w, _ := strconv.ParseInt(l[i], 10, 32)
-			h, _ := strconv.ParseInt(l[i+1], 10, 32)
-			sizes = append(sizes, size{w: int(w), h: int(h)})
+	return func(yield func(size) bool) {
+		if m == nil {
+			return
+		}
+		for _, l := range m {
+			for i := 1; i < len(l)-1; i += 2 {
+				w, _ := strconv.ParseInt(l[i], 10, 32)
+				h, _ := strconv.ParseInt(l[i+1], 10, 32)
+				if !yield(size{w: int(w), h: int(h)}) {
+					return
+				}
+			}
 		}
 	}
-	return sizes
 }
 
 // find dimensions in URL
 func extractSizeFromURL(url string) *size {
 	// try to find WxH pattern
-	v := parseSizes(url)
-	if len(v) > 0 {
-		return &v[0]
+	for v := range parseSizesIter(url) {
+		return &v
 	}
 
 	// look for -NNN at end of filename

@@ -11,6 +11,7 @@ package favicon
 import (
 	"fmt"
 	"io"
+	"iter"
 	urls "net/url"
 	"path/filepath"
 	"strings"
@@ -63,23 +64,23 @@ func (p *parser) parseGoQueryDocument(doc *gq.Document) ([]*Icon, error) {
 // main parser function
 func (p *parser) parse(doc *gq.Document) ([]*Icon, error) {
 	var (
-		icons       []*Icon
 		manifestURL = p.absURL("/manifest.json")
 	)
+	iconsIter := make([]func(func(*Icon) bool), 0, 7)
 
 	// icons described in <link../> tags
-	doc.Find("link").Each(func(i int, sel *gq.Selection) {
+	for _, sel := range doc.Find("link").EachIter() {
 		rel, _ := sel.Attr("rel")
 		rel = strings.ToLower(rel)
 		switch rel {
 		// all cases are handled the same way for now
 		case "icon", "alternate icon", "shortcut icon":
-			icons = append(icons, p.parseLink(sel)...)
+			iconsIter = append(iconsIter, p.parseLinkIter(sel))
 		case "apple-touch-icon", "apple-touch-icon-precomposed":
-			icons = append(icons, p.parseLink(sel)...)
+			iconsIter = append(iconsIter, p.parseLinkIter(sel))
 		// site-specific browser apps (https://fluidapp.com/)
 		case "fluid-icon":
-			icons = append(icons, p.parseLink(sel)...)
+			iconsIter = append(iconsIter, p.parseLinkIter(sel))
 		case "manifest":
 			url, _ := sel.Attr("href")
 			url = p.absURL(url)
@@ -87,7 +88,7 @@ func (p *parser) parse(doc *gq.Document) ([]*Icon, error) {
 				manifestURL = url
 			}
 		}
-	})
+	}
 
 	// OpenGraph (og:) and Twitter <meta../> tags
 	var (
@@ -95,10 +96,10 @@ func (p *parser) parse(doc *gq.Document) ([]*Icon, error) {
 		opengraph []string
 		twitter   []string
 	)
-	doc.Find("meta").Each(func(i int, sel *gq.Selection) {
+	for _, sel := range doc.Find("meta").EachIter() {
 		if s, ok := sel.Attr("charset"); ok && s != "" {
 			p.charset = s
-			return
+			continue
 		}
 
 		var (
@@ -112,7 +113,7 @@ func (p *parser) parse(doc *gq.Document) ([]*Icon, error) {
 		}
 
 		if prop == "" || val == "" {
-			return
+			continue
 		}
 
 		prop = strings.ToLower(prop)
@@ -122,58 +123,58 @@ func (p *parser) parse(doc *gq.Document) ([]*Icon, error) {
 		if strings.HasPrefix(prop, "twitter:image") {
 			twitter = append(twitter, prop, val)
 		}
-	})
+	}
 
 	// find icons in k, v sequences
-	icons = append(icons, p.parseOpenGraph(opengraph)...)
-	icons = append(icons, p.parseTwitter(twitter)...)
+	iconsIter = append(iconsIter, p.parseOpenGraphIter(opengraph), p.parseTwitterIter(twitter))
 
 	// retrieve and parse JSON manifest
 	if !p.find.ignoreManifest {
-		icons = append(icons, p.parseManifest(manifestURL)...)
+		iconsIter = append(iconsIter, p.parseManifestIter(manifestURL))
 	}
 	// check for existence of URLs like /favicon.ico
 	if !p.find.ignoreWellKnown {
-		icons = append(icons, p.findWellKnownIcons()...)
+		iconsIter = append(iconsIter, p.findWellKnownIconsIter())
 	}
 
-	icons = p.postProcessIcons(icons)
-
-	return icons, nil
+	return p.postProcessIcons(concat(iconsIter...)), nil
 }
 
 // extract icons defined in <link../> tags
-func (p *parser) parseLink(sel *gq.Selection) []*Icon {
+func (p *parser) parseLinkIter(sel *gq.Selection) iter.Seq[*Icon] {
 	var (
 		href, _ = sel.Attr("href")
 		typ, _  = sel.Attr("type")
 		size, _ = sel.Attr("sizes")
-		icons   []*Icon
+		sizes   = false
 		icon    = &Icon{}
 	)
-
-	if href = p.absURL(href); href == "" {
-		return nil
-	}
-
-	icon.URL = href
-	// icon.FileExt = fileExt(href)
-	if typ != "" {
-		icon.MimeType = typ
-	}
-	if size != "" {
-		for _, sz := range parseSizes(size) {
-			i := icon.Copy()
-			i.Width, i.Height = sz.w, sz.h
-			icons = append(icons, i)
+	return func(yield func(*Icon) bool) {
+		if href = p.absURL(href); href == "" {
+			return
 		}
-	}
-	if len(icons) == 0 { // no sizes understood
-		icons = append(icons, icon)
-	}
 
-	p.find.log.Printf("(link) %s", icon.URL)
-	return icons
+		icon.URL = href
+		// icon.FileExt = fileExt(href)
+		if typ != "" {
+			icon.MimeType = typ
+		}
+		if size != "" {
+			for sz := range parseSizesIter(size) {
+				i := icon.Copy()
+				i.Width, i.Height = sz.w, sz.h
+				sizes = true
+				if !yield(i) {
+					return
+				}
+			}
+		}
+		if !sizes { // no sizes understood
+			yield(icon)
+		}
+
+		p.find.log.Printf("(link) %s", icon.URL)
+	}
 }
 
 // extract file extension from a URL

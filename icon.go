@@ -12,6 +12,7 @@ import (
 	"cmp"
 	"crypto/sha256"
 	"fmt"
+	"iter"
 	"slices"
 )
 
@@ -74,9 +75,9 @@ func defaultCompareFunc(a, b *Icon) int {
 }
 
 // Check missing values, remove duplicates, sort.
-func (p *parser) postProcessIcons(icons []*Icon) []*Icon {
+func (p *parser) postProcessIcons(iconsIter func(func(*Icon) bool)) []*Icon {
 	tidied := map[string]*Icon{}
-	for _, icon := range icons {
+	for icon := range iconsIter {
 		icon.URL = p.absURL(icon.URL)
 
 		if icon.MimeType == "" {
@@ -100,22 +101,29 @@ func (p *parser) postProcessIcons(icons []*Icon) []*Icon {
 		tidied[icon.Hash] = icon
 	}
 
-	icons = []*Icon{}
-	for _, icon := range tidied {
-		for _, fun := range p.find.filters {
-			if icon = fun(icon); icon == nil {
-				break
-			}
-		}
-		if icon != nil {
-			icons = append(icons, icon)
-		}
-	}
+	icons := slices.Collect(p.applyFiltersIter(tidied))
 
 	if p.find.compare != nil {
 		slices.SortFunc(icons, p.find.compare)
 	}
 	return icons
+}
+
+func (p *parser) applyFiltersIter(tidied map[string]*Icon) iter.Seq[*Icon] {
+	return func(yield func(*Icon) bool) {
+		for _, icon := range tidied {
+			for _, fun := range p.find.filters {
+				if icon = fun(icon); icon == nil {
+					break
+				}
+			}
+			if icon != nil {
+				if !yield(icon) {
+					return
+				}
+			}
+		}
+	}
 }
 
 // returns a hash of icon's URL and size.

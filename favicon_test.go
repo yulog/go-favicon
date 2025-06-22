@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -92,7 +93,7 @@ func TestFindManifest(t *testing.T) {
 	p := f.newParser()
 	p.baseURL = mustURL("https://github.com")
 
-	icons := p.parseManifestReader(file)
+	icons := slices.Collect(p.parseManifestReaderIter(file))
 	assert.Equal(t, 11, len(icons), "unexpected favicon count")
 }
 
